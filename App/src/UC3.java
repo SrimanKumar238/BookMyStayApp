@@ -1,96 +1,69 @@
-import java.util.HashMap;
-import java.util.Map;
+import java.util.LinkedList;
+import java.util.Queue;
 
-// Room Domain Model
-class Room {
-    private String type;
-    private int price;
+// Reservation class (represents a booking request)
+class Reservation {
 
-    public Room(String type, int price) {
-        this.type = type;
-        this.price = price;
+    private String guestName;
+    private String roomType;
+
+    public Reservation(String guestName, String roomType) {
+        this.guestName = guestName;
+        this.roomType = roomType;
     }
 
-    public String getType() {
-        return type;
+    public String getGuestName() {
+        return guestName;
     }
 
-    public int getPrice() {
-        return price;
-    }
-}
-
-// Inventory (State Holder - Read Only Access)
-class RoomInventory {
-
-    private Map<String, Integer> availability;
-
-    public RoomInventory() {
-        availability = new HashMap<>();
-
-        availability.put("Single Room", 5);
-        availability.put("Double Room", 0);   // unavailable
-        availability.put("Deluxe Room", 2);
-    }
-
-    public int getAvailability(String roomType) {
-        return availability.getOrDefault(roomType, 0);
-    }
-
-    public Map<String, Integer> getAllAvailability() {
-        return availability;
+    public String getRoomType() {
+        return roomType;
     }
 }
 
-// Search Service (Read-only logic)
-class SearchService {
+// Booking Request Queue (FIFO)
+class BookingRequestQueue {
 
-    private RoomInventory inventory;
-    private Map<String, Room> roomDetails;
+    private Queue<Reservation> queue;
 
-    public SearchService(RoomInventory inventory) {
-        this.inventory = inventory;
-
-        roomDetails = new HashMap<>();
-        roomDetails.put("Single Room", new Room("Single Room", 2000));
-        roomDetails.put("Double Room", new Room("Double Room", 3500));
-        roomDetails.put("Deluxe Room", new Room("Deluxe Room", 5000));
+    public BookingRequestQueue() {
+        queue = new LinkedList<>();
     }
 
-    public void searchRooms() {
+    // Add request to queue
+    public void addRequest(Reservation reservation) {
+        queue.offer(reservation);
+        System.out.println("Request added: "
+                + reservation.getGuestName()
+                + " -> " + reservation.getRoomType());
+    }
 
-        System.out.println("\nAvailable Rooms:\n");
+    // Display all requests in FIFO order
+    public void displayRequests() {
+        System.out.println("\nBooking Requests in Queue:");
 
-        for (String type : inventory.getAllAvailability().keySet()) {
-
-            int count = inventory.getAvailability(type);
-
-            // Show only available rooms
-            if (count > 0) {
-
-                Room room = roomDetails.get(type);
-
-                System.out.println("Room Type: " + room.getType());
-                System.out.println("Price: ₹" + room.getPrice());
-                System.out.println("Available: " + count);
-                System.out.println("-------------------------");
-            }
+        for (Reservation r : queue) {
+            System.out.println(r.getGuestName()
+                    + " requested " + r.getRoomType());
         }
     }
 }
 
-// Main Class
-public class UseCase4RoomSearch {
+// Main class
+public class UseCase5BookingRequestQueue {
 
     public static void main(String[] args) {
 
-        System.out.println("=== UC4: Room Search & Availability Check ===");
+        System.out.println("=== UC5: Booking Request Queue (FIFO) ===");
 
-        RoomInventory inventory = new RoomInventory();
+        BookingRequestQueue bookingQueue = new BookingRequestQueue();
 
-        SearchService searchService = new SearchService(inventory);
+        // Simulate booking requests
+        bookingQueue.addRequest(new Reservation("Alice", "Single Room"));
+        bookingQueue.addRequest(new Reservation("Bob", "Deluxe Room"));
+        bookingQueue.addRequest(new Reservation("Charlie", "Double Room"));
 
-        // Perform search (read-only)
-        searchService.searchRooms();
+        // Display queue (FIFO order)
+        bookingQueue.displayRequests();
     }
 }
