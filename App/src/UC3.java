@@ -1,128 +1,94 @@
 import java.util.*;
 
-// Reservation (from UC5)
-class Reservation {
-    private String guestName;
-    private String roomType;
+// Service class (Add-On Service)
+class Service {
+    private String name;
+    private int cost;
 
-    public Reservation(String guestName, String roomType) {
-        this.guestName = guestName;
-        this.roomType = roomType;
+    public Service(String name, int cost) {
+        this.name = name;
+        this.cost = cost;
     }
 
-    public String getGuestName() {
-        return guestName;
+    public String getName() {
+        return name;
     }
 
-    public String getRoomType() {
-        return roomType;
-    }
-}
-
-// Inventory Service (from UC3)
-class RoomInventory {
-    private Map<String, Integer> availability;
-
-    public RoomInventory() {
-        availability = new HashMap<>();
-        availability.put("Single Room", 2);
-        availability.put("Deluxe Room", 1);
-        availability.put("Double Room", 1);
-    }
-
-    public int getAvailability(String type) {
-        return availability.getOrDefault(type, 0);
-    }
-
-    public void reduceRoom(String type) {
-        availability.put(type, availability.get(type) - 1);
+    public int getCost() {
+        return cost;
     }
 }
 
-// Booking Service (UC6 Core Logic)
-class BookingService {
+// Add-On Service Manager
+class AddOnServiceManager {
 
-    private Queue<Reservation> queue;
-    private RoomInventory inventory;
+    // Map: Reservation ID -> List of Services
+    private Map<String, List<Service>> serviceMap;
 
-    // Track allocated room IDs
-    private Map<String, Set<String>> allocatedRooms;
-
-    public BookingService(Queue<Reservation> queue, RoomInventory inventory) {
-        this.queue = queue;
-        this.inventory = inventory;
-        this.allocatedRooms = new HashMap<>();
+    public AddOnServiceManager() {
+        serviceMap = new HashMap<>();
     }
 
-    // Generate unique room ID
-    private String generateRoomId(String type, int count) {
-        return type.replace(" ", "") + "-" + count;
+    // Add service to reservation
+    public void addService(String reservationId, Service service) {
+
+        serviceMap.putIfAbsent(reservationId, new ArrayList<>());
+
+        serviceMap.get(reservationId).add(service);
+
+        System.out.println("Added service: " + service.getName()
+                + " to Reservation: " + reservationId);
     }
 
-    // Process queue
-    public void processBookings() {
+    // Calculate total cost
+    public int calculateTotalCost(String reservationId) {
 
-        System.out.println("\nProcessing Bookings...\n");
+        List<Service> services = serviceMap.getOrDefault(reservationId, new ArrayList<>());
 
-        while (!queue.isEmpty()) {
+        int total = 0;
 
-            Reservation r = queue.poll();
-            String type = r.getRoomType();
-
-            int available = inventory.getAvailability(type);
-
-            if (available > 0) {
-
-                // Get allocated set for this type
-                allocatedRooms.putIfAbsent(type, new HashSet<>());
-
-                Set<String> roomSet = allocatedRooms.get(type);
-
-                // Generate unique ID
-                String roomId = generateRoomId(type, roomSet.size() + 1);
-
-                // Ensure uniqueness (Set prevents duplicates)
-                roomSet.add(roomId);
-
-                // Update inventory
-                inventory.reduceRoom(type);
-
-                System.out.println("Booking Confirmed for " + r.getGuestName());
-                System.out.println("Room Type: " + type);
-                System.out.println("Assigned Room ID: " + roomId);
-                System.out.println("----------------------------");
-
-            } else {
-                System.out.println("Booking Failed for " + r.getGuestName()
-                        + " (No rooms available for " + type + ")");
-                System.out.println("----------------------------");
-            }
+        for (Service s : services) {
+            total += s.getCost();
         }
+
+        return total;
+    }
+
+    // Display services
+    public void displayServices(String reservationId) {
+
+        List<Service> services = serviceMap.getOrDefault(reservationId, new ArrayList<>());
+
+        System.out.println("\nServices for Reservation: " + reservationId);
+
+        for (Service s : services) {
+            System.out.println(s.getName() + " - ₹" + s.getCost());
+        }
+
+        System.out.println("Total Add-On Cost: ₹" + calculateTotalCost(reservationId));
     }
 }
 
 // Main Class
-public class UseCase6RoomAllocationService {
+public class UseCase7AddOnServiceSelection {
 
     public static void main(String[] args) {
 
-        System.out.println("=== UC6: Reservation Confirmation & Room Allocation ===");
+        System.out.println("=== UC7: Add-On Service Selection ===");
 
-        // Step 1: Create queue (UC5)
-        Queue<Reservation> queue = new LinkedList<>();
+        AddOnServiceManager manager = new AddOnServiceManager();
 
-        queue.offer(new Reservation("Alice", "Single Room"));
-        queue.offer(new Reservation("Bob", "Deluxe Room"));
-        queue.offer(new Reservation("Charlie", "Single Room"));
-        queue.offer(new Reservation("David", "Single Room")); // should fail
+        // Example reservation IDs (from UC6 concept)
+        String res1 = "RES-101";
+        String res2 = "RES-102";
 
-        // Step 2: Inventory (UC3)
-        RoomInventory inventory = new RoomInventory();
+        // Add services
+        manager.addService(res1, new Service("Breakfast", 500));
+        manager.addService(res1, new Service("Airport Pickup", 1000));
+        manager.addService(res2, new Service("Spa", 1500));
 
-        // Step 3: Booking Service
-        BookingService bookingService = new BookingService(queue, inventory);
-
-        // Step 4: Process bookings
-        bookingService.processBookings();
+        // Display services and cost
+        manager.displayServices(res1);
+        manager.displayServices(res2);
     }
 }
